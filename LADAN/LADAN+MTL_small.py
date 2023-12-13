@@ -5,8 +5,48 @@ import warnings
 import tensorflow as tf
 import time
 import pickle as pk
-from Model.Topjudge_model import Topjudge
-from parser import ConfigParser
+#from Model.Topjudge_model import Topjudge
+from Topjudge_model import Topjudge
+# from parser import ConfigParser
+
+import configparser
+import os
+
+
+class ConfigParser:
+    def __init__(self, path):
+        self.default_config = configparser.RawConfigParser()
+        if os.path.exists("config/default_local.config"):
+            self.default_config.read("config/default_local.config")
+        else:
+            self.default_config.read("config/default.config")
+        self.config = configparser.RawConfigParser()
+        self.config.read(path)
+
+    def get(self, field, name):
+        try:
+            return self.config.get(field, name)
+        except Exception as e:
+            return self.default_config.get(field, name)
+
+    def getint(self, field, name):
+        try:
+            return self.config.getint(field, name)
+        except Exception as e:
+            return self.default_config.getint(field, name)
+
+    def getfloat(self, field, name):
+        try:
+            return self.config.getfloat(field, name)
+        except Exception as e:
+            return self.default_config.getfloat(field, name)
+
+    def getboolean(self, field, name):
+        try:
+            return self.config.getboolean(field, name)
+        except Exception as e:
+            return self.default_config.getboolean(field, name)
+
 import numpy as np
 from sklearn import metrics
 from law_processed.law_processed import get_law_graph
@@ -135,6 +175,7 @@ def run_model(input, mask, model):
     mask_shape = mask.get_shape().as_list()
     input = tf.reshape(input, [int(np.prod(input_shape[:-2]))] + input_shape[-2:])
     mask = tf.reshape(mask, [int(np.prod(mask_shape[:-2]))] + mask_shape[-2:])
+    mask = tf.squeeze(mask, axis=-1)
     out = model(input, mask=mask)
     rep = tf.reshape(out, input_shape[:-1] + [lstm_size * 2])
     return rep
@@ -169,7 +210,7 @@ with open('data/w2id_thulac.pkl', 'rb') as f:
     word2id_dict = pk.load(f)
     f.close()
 
-emb_path = 'data/cail_thulac.npy'
+emb_path = 'D://大四上学期/NLP/下载数据集/cail_thulac.npy'
 word_embedding = np.cast[np.float32](np.load(emb_path))
 
 word_dict_len = len(word2id_dict)
@@ -464,18 +505,21 @@ with tf.Graph().as_default():
     start_time = time.time()
 
     ############################--------------initialized over---------------########################
-    f_train = pk.load(open('legal_basis_data/train_processed_thulac_Legal_basis.pkl', 'rb'))
-    f_valid = pk.load(open('legal_basis_data/valid_processed_thulac_Legal_basis.pkl', 'rb'))
-    f_test = pk.load(open('legal_basis_data/test_processed_thulac_Legal_basis.pkl', 'rb'))
+    f_train = pk.load(open('D://大四上学期/NLP/MyLADAN/new_file/train_processed_thulac_Legal_basis.pkl', 'rb'))
+    f_valid = pk.load(open('D://大四上学期/NLP/MyLADAN/new_file/valid_processed_thulac_Legal_basis.pkl', 'rb'))
+    f_test = pk.load(open('D://大四上学期/NLP/MyLADAN/new_file/test_processed_thulac_Legal_basis.pkl', 'rb'))
 
     train_step = int(len(f_train['fact_list']) / batch_size) + 1
     lose_num_train = train_step * batch_size - len(f_train['fact_list'])
+    print("训练步数为{}".format(train_step))
 
     valid_step = int(len(f_valid['fact_list']) / batch_size) + 1
     lose_num_valid = valid_step * batch_size - len(f_valid['fact_list'])
+    print("验证步数为{}".format(valid_step))
 
     test_step = int(len(f_test['fact_list']) / batch_size) + 1
     lose_num_test = test_step * batch_size - len(f_test['fact_list'])
+    print("测试步数为{}".format(test_step))
 
     fact_train = f_train['fact_list']
     law_labels_train = f_train['law_label_lists']
@@ -490,6 +534,7 @@ with tf.Graph().as_default():
         accu_label_train = [accu_label_train[i] for i in index]
         term_train = [term_train[i] for i in index]
 
+        max_epoch = 2
         for epoch in range(max_epoch):
             for i in range(train_step):
                 if i == train_step - 1:
@@ -512,6 +557,9 @@ with tf.Graph().as_default():
                 total_loss += loss_value
                 graph_chose_total += graph_chose_value
                 ave_graph_acc += np.sum(np.cast[np.int32](correct_graph_))/128.0
+
+                if i%10 == 0:
+                    print("训练已经完成{}次".format(i))
 
                 if (i + 1) == train_step:
                     duration = time.time() - start_time
@@ -558,6 +606,10 @@ with tf.Graph().as_default():
 
                 feed_dict_valid = gen_dict(inputs, law_labels_input, accu_labels_input, time_labels_input)
                 num_y = batch_size
+
+                if i%10 == 0:
+                    print("验证已经完成{}次".format(i))
+
                 if i + 1 == valid_step:
                     num_y = batch_size - lose_num_valid
 
@@ -624,6 +676,10 @@ with tf.Graph().as_default():
 
                 feed_dict_test = gen_dict(inputs, law_labels_input, accu_labels_input, time_labels_input)
                 num_y = batch_size
+
+                if i%10 == 0:
+                    print("测试已经完成{}次".format(i))
+
                 if i + 1 == test_step:
                     num_y = batch_size - lose_num_test
 
