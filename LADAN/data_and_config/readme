@@ -1,3 +1,6 @@
-DATA
+Data and config
 
-使用CAIL作为数据集
+使用CAIL作为数据集。数据集参见https://github.com/prometheusXN/LADAN
+
+进行基础数据预处理，data_process.ipynb-->get_pickle.ipynb-->legal_basis_data.ipynb
+
