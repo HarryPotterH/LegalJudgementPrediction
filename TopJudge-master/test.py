@@ -15,6 +15,10 @@ parser.add_argument('--gpu', '-g')
 parser.add_argument('--config', '-c')
 args = parser.parse_args()
 
+print(args.gpu)
+print(args.model)
+print(args.config)
+
 configFilePath = args.config
 if configFilePath is None:
     print("python *.py\t--config/-c\tconfigfile")

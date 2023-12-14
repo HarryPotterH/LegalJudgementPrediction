@@ -1,5 +1,5 @@
 from sklearn.svm import LinearSVC
-from sklearn.externals import joblib
+import joblib
 import json
 import os
 from torch.autograd import Variable
