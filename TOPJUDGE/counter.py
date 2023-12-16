@@ -8,8 +8,8 @@ from net.parser import ConfigParser
 from net.data_formatter import get_time_id, check_sentence
 from net.loader import get_name
 
-in_path = r"/data/zhx/law/data/cail"
-out_path = r"/disk/mysql/law_data/count_data"
+in_path = "./data/data_train.json"
+out_path = "./data/"
 
 num_file = 20
 num_process = 1
@@ -20,7 +20,7 @@ crit = {}
 law = {}
 term = {}
 
-config = ConfigParser("/home/zhx/law_pre/config/default_config.config")
+config = ConfigParser("./config/default_config.config")
 
 
 def analyze_law(data):
@@ -75,7 +75,7 @@ def check(data):
 
 def draw_out(in_path, out_path):
     print(in_path)
-    inf = open(in_path, "r")
+    inf = open(in_path, "r",encoding="utf-8")
 
     cnt = 0
     for line in inf:
@@ -98,7 +98,10 @@ def work(from_id, to_id):
 
 
 if __name__ == "__main__":
-    work(0, 20)
+    print(" begin to work")
+    draw_out(in_path, out_path)
+    print(" work done")
+    
     print(total_cnt)
 
     f = open(os.path.join(in_path, "crit.txt"), "w")
